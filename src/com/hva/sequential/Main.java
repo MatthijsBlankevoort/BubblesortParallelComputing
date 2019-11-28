@@ -6,10 +6,12 @@ import java.util.Random;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 10;
+    private static final int SIZE = 20000;
     private static Integer[] array = new Integer[SIZE];
 
     public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
+
         initializeArray();
         bubbleSort(array);
         System.out.println("Sorted array");
@@ -18,6 +20,10 @@ public class Main {
         for (int i=0; i<n; ++i)
             System.out.print(array[i] + " ");
         System.out.println();
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println(" elapsed time: " + elapsedTime + " milliseconds");
     }
 
     private static void bubbleSort(Integer arr[]) {
