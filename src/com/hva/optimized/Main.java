@@ -156,8 +156,8 @@ public class Main {
 
     private static AtomicIntegerArray createAtomicArrayChunk(int start, int end, int chunkSize) {
         AtomicIntegerArray atomicIntegerArrayChunk = new AtomicIntegerArray(chunkSize);
-        for(int i = start; i < end; i++) {
-            atomicIntegerArrayChunk.set(i, array.get(i));
+        for(int i = start, j = 0; i < end; i++, j++) {
+            atomicIntegerArrayChunk.set(j, array.get(i));
         }
         return atomicIntegerArrayChunk;
     }
@@ -174,6 +174,10 @@ public class Main {
         }
         if(rest > 0){
             arrays[chunks - 1] = createAtomicArrayChunk((chunks - 1) * chunkSize, (chunks - 1) * chunkSize + rest, chunkSize);
+        }
+
+        for (int i = 0; i < arrays.length; i++) {
+            System.out.println(arrays[i]);
         }
         return arrays;
     }
