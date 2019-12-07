@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 20;
+    private static final int SIZE = 5000;
     private static final int CORE = 4;
     private static AtomicIntegerArray array;
     private static int[] ints = new int[SIZE];
@@ -18,127 +18,120 @@ public class Main {
     private static AtomicIntegerArray[] chunks = new AtomicIntegerArray[CORE];
     private static Semaphore[] sem = new Semaphore[CORE];
 
-//    static class Worker implements Runnable {
-//
-//        public Worker() {
-//
-//        }
-//
-//        public void run()
-//        {
-//            for(int k = 0; k < SIZE / CORE; k++) {
-//                for(int i = 0; i < chunks.length; i++) {
-//
-//                    try {
-//                        sem[i].acquire();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//
-//
-//                    bubble(chunks[i]);
-//
-//                    if(i < chunks.length - 1) {
-//                        try {
-//                            sem[i+1].acquire();
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-//
-//                        Integer last = chunks[i][chunks[i].length -1];
-//                        Integer first = chunks[i+1][0];
-//
-//                        if(last > first) {
-//                            chunks[i][chunks[i].length - 1] = first;
-//                            chunks[i+1][0] = last;
-//                        }
-//
-//                        try {
-//                            sem[i+1].release();
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                    try {
-//                        sem[i].release();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//
-//                }
-//            }
-//        }
-//    }
+    static class Worker implements Runnable {
 
-    private static void bubble(Integer[] arr) {
-        int n = arr.length;
+        public Worker() {
+
+        }
+
+        public void run()
+        {
+            for(int k = 0; k < SIZE / CORE; k++) {
+                for(int i = 0; i < chunks.length; i++) {
+                    try {
+                        sem[i].acquire();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    bubble(chunks[i]);
+                    if(i < chunks.length - 1) {
+                        try {
+                            sem[i+1].acquire();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        int last = chunks[i].get(chunks[i].length() - 1);
+                        int first = chunks[i+1].get(0);
+
+                        if(last > first) {
+                            chunks[i].compareAndSet(chunks[i].length() - 1, last, first);
+                            chunks[i+1].compareAndSet(0, first, last);
+                        }
+
+                        try {
+                            sem[i+1].release();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    try {
+                        sem[i].release();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        }
+    }
+
+    private static void bubble(AtomicIntegerArray arr) {
+        int n = arr.length();
 
         for (int j = 0; j < n-1; j++) {
-            if (arr[j] > arr[j+1])
+            if (arr.get(j) > arr.get(j+1))
             {
-                int temp = arr[j];
-                arr[j] = arr[j+1];
-                arr[j+1] = temp;
+                int temp = arr.get(j);
+                arr.set(j, arr.get(j+1));
+                arr.set(j+ 1, temp);
             }
+        }
+    }
+
+    private static void initializeSemaphores() {
+        for(int i = 0; i < sem.length; i++) {
+            sem[i] = new Semaphore(1);
         }
     }
 
     public static void main(String[] args) throws Exception {
         initializeArray();
 
+        initializeSemaphores();
+
         long startTime = System.currentTimeMillis();
 
         chunks = splitArray(array, SIZE / CORE);
 
-//        for(int i = 0; i < CORE; i++) {
-//            for (int j = 0; j < SIZE; j++) {
-//                assert chunks != null;
-//                System.out.println(chunks[i].get(j));
-//            }
-//        }
+        ExecutorService executor = Executors.newFixedThreadPool(CORE);
 
-//        ExecutorService executor = Executors.newFixedThreadPool(CORE);
-//
-//        for(int t = 0; t < CORE; t++) {
-//            executor.submit(new Worker());
-//        }
-//
-//        executor.shutdown();
-//
-//        try {
-//            executor.awaitTermination(24L, TimeUnit.HOURS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//
-//        long stopTime = System.currentTimeMillis();
-//        long elapsedTime = stopTime - startTime;
-//        System.out.println(" elapsed time: " + elapsedTime + " milliseconds");
-//
-//
-//        List<Integer> sortedArray = new ArrayList<Integer>();
-//
-//        for (Integer[] chunk : chunks) {
-//            sortedArray.addAll(Arrays.asList(chunk));
-//        }
-//
-//        testArray = integers;
-//        Arrays.sort(testArray);
-//        System.out.println("MERGED");
-//        System.out.println("----------------------------");
-//
-//        for(int i = 0; i < SIZE; i++) {
-//            System.out.print(" " + testArray[i]);
-//        }
-//
-//        System.out.println("");
-//
-//        for(int i = 0; i < SIZE; i++) {
-//            System.out.print(" " + sortedArray.get(i));
-//
-//        }
-//        System.out.println("");
+        for(int t = 0; t < CORE; t++) {
+            executor.submit(new Worker());
+        }
+
+        executor.shutdown();
+
+        try {
+            executor.awaitTermination(24L, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println(" elapsed time: " + elapsedTime + " milliseconds");
+
+
+        List<Integer> sortedArray = new ArrayList<Integer>();
+
+        for (AtomicIntegerArray chunk : chunks) {
+            for (int i = 0; i < chunk.length(); i++) {
+//                System.out.println("chunk get " + chunk.get(i));
+                sortedArray.add(chunk.get(i));
+            }
+        }
+
+        testArray = integers;
+        Arrays.sort(testArray);
+        System.out.println("MERGED");
+        System.out.println("----------------------------");
+
+        System.out.println("test array " + Arrays.toString(testArray));
+
+        System.out.println("sorted array" + Arrays.toString(sortedArray.toArray()));
+
+        assert Arrays.equals(testArray, sortedArray.toArray());
     }
 
     private static void initializeArray() {
@@ -151,6 +144,7 @@ public class Main {
         for (int i = 0; i < SIZE; i++) {
             ints[i] = integers[i];
         }
+
         array = new AtomicIntegerArray(ints);
     }
 
@@ -176,9 +170,6 @@ public class Main {
             arrays[chunks - 1] = createAtomicArrayChunk((chunks - 1) * chunkSize, (chunks - 1) * chunkSize + rest, chunkSize);
         }
 
-        for (int i = 0; i < arrays.length; i++) {
-            System.out.println(arrays[i]);
-        }
         return arrays;
     }
 }
