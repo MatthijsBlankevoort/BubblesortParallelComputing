@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 5000;
+    private static final int SIZE = 40000;
     private static final int CORE = 4;
     private static AtomicIntegerArray array;
     private static int[] ints = new int[SIZE];
@@ -45,8 +45,8 @@ public class Main {
                         int first = chunks[i+1].get(0);
 
                         if(last > first) {
-                            chunks[i].compareAndSet(chunks[i].length() - 1, last, first);
-                            chunks[i+1].compareAndSet(0, first, last);
+                            chunks[i].set(chunks[i].length() - 1, first);
+                            chunks[i+1].set(0, last);
                         }
 
                         try {

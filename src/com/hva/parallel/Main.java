@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 20000;
+    private static final int SIZE = 40000;
     private static final int CORE = 4;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
@@ -72,10 +72,10 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        long startTime = System.currentTimeMillis();
 
         initializeArray();
         initializeSemaphores();
+        long startTime = System.currentTimeMillis();
         chunks = splitArray(array, SIZE / CORE);
 
         ExecutorService executor = Executors.newFixedThreadPool(CORE);
