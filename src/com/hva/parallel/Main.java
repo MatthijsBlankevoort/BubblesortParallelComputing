@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 40000;
-    private static final int CORE = 4;
+    private static final int SIZE = 5000;
+    private static final int CORE = 1;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
     private static Integer[][] chunks = new Integer[CORE][];
@@ -22,48 +22,52 @@ public class Main {
 
         }
 
-        public void run()
-        {
-            for(int k = 0; k < SIZE / CORE; k++) {
-                for(int i = 0; i < chunks.length; i++) {
+        public void run() {
+            if (CORE <= 1) {
+                for (int k = 0; k < SIZE / CORE; k++) {
+                    bubble(chunks[0]);
+                }
+            } else {
+                for (int k = 0; k < SIZE / CORE; k++) {
+                    for (int i = 0; i < chunks.length; i++) {
 
-                    try {
-                        sem[i].acquire();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-
-                    bubble(chunks[i]);
-
-                    if(i < chunks.length - 1) {
                         try {
-                            sem[i+1].acquire();
+                            sem[i].acquire();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
 
-                        Integer last = chunks[i][chunks[i].length -1];
-                        Integer first = chunks[i+1][0];
+                        bubble(chunks[i]);
 
-                        if(last > first) {
-                            chunks[i][chunks[i].length - 1] = first;
-                            chunks[i+1][0] = last;
+                        if (i < chunks.length - 1) {
+                            try {
+                                sem[i + 1].acquire();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                            Integer last = chunks[i][chunks[i].length - 1];
+                            Integer first = chunks[i + 1][0];
+
+                            if (last > first) {
+                                chunks[i][chunks[i].length - 1] = first;
+                                chunks[i + 1][0] = last;
+                            }
+
+                            try {
+                                sem[i + 1].release();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
 
                         try {
-                            sem[i+1].release();
+                            sem[i].release();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    }
 
-                    try {
-                        sem[i].release();
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-
                 }
             }
 
@@ -81,7 +85,7 @@ public class Main {
         ExecutorService executor = Executors.newFixedThreadPool(CORE);
 
 
-        for(int t = 0; t < CORE; t++) {
+        for (int t = 0; t < CORE; t++) {
             executor.submit(new Worker());
         }
 
@@ -100,12 +104,11 @@ public class Main {
 
         List<Integer> sortedArray = new ArrayList<Integer>();
 
-        for(int i = 0; i < chunks.length; i++) {
-            for(int j = 0; j < chunks[i].length; j++) {
+        for (int i = 0; i < chunks.length; i++) {
+            for (int j = 0; j < chunks[i].length; j++) {
                 sortedArray.add(chunks[i][j]);
             }
         }
-
 
 
         testArray = array;
@@ -113,13 +116,13 @@ public class Main {
         System.out.println("MERGED");
         System.out.println("----------------------------");
 
-        for(int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < SIZE; i++) {
             System.out.print(" " + testArray[i]);
         }
 
         System.out.println("");
 
-        for(int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < SIZE; i++) {
             System.out.print(" " + sortedArray.get(i));
 
         }
@@ -132,31 +135,29 @@ public class Main {
     private static void bubble(Integer arr[]) {
         int n = arr.length;
 
-        for (int j = 0; j < n-1; j++) {
-                if (arr[j] > arr[j+1])
-                {
-                    int temp = arr[j];
-                    arr[j] = arr[j+1];
-                    arr[j+1] = temp;
-                }
+        for (int j = 0; j < n - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
         }
     }
 
     private static void bubbleSort(Integer arr[]) {
         int n = arr.length;
-        for (int i = 0; i < n-1; i++)
-            for (int j = 0; j < n-i-1; j++)
-                if (arr[j] > arr[j+1])
-                {
+        for (int i = 0; i < n - 1; i++)
+            for (int j = 0; j < n - i - 1; j++)
+                if (arr[j] > arr[j + 1]) {
                     // swap arr[j+1] and arr[i]
                     int temp = arr[j];
-                    arr[j] = arr[j+1];
-                    arr[j+1] = temp;
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
                 }
     }
 
     private static void initializeSemaphores() {
-        for(int i = 0; i < sem.length; i++) {
+        for (int i = 0; i < sem.length; i++) {
             sem[i] = new Semaphore(1);
         }
     }
@@ -170,8 +171,8 @@ public class Main {
         Arrays.sort(array, Collections.reverseOrder());
     }
 
-    private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize){
-        if(chunkSize<=0){
+    private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize) {
+        if (chunkSize <= 0) {
             return null;  // just in case :)
         }
         // first we have to check if the array can be split in multiple
@@ -185,11 +186,11 @@ public class Main {
         // part from the input array. If we have a rest (rest>0), then
         // the last array will have less elements than the others. This
         // needs to be handled separately, so we iterate 1 times less.
-        for(int i = 0; i < (rest > 0 ? chunks - 1 : chunks); i++){
+        for (int i = 0; i < (rest > 0 ? chunks - 1 : chunks); i++) {
             // this copies 'chunk' times 'chunkSize' elements into a new array
             arrays[i] = Arrays.copyOfRange(arrayToSplit, i * chunkSize, i * chunkSize + chunkSize);
         }
-        if(rest > 0){ // only when we have a rest
+        if (rest > 0) { // only when we have a rest
             // we copy the remaining elements into the last chunk
             arrays[chunks - 1] = Arrays.copyOfRange(arrayToSplit, (chunks - 1) * chunkSize, (chunks - 1) * chunkSize + rest);
         }

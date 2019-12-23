@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 20000;
+    private static final int SIZE = 5000;
     private static Integer[] array = new Integer[SIZE];
 
     public static void main(String[] args) {
