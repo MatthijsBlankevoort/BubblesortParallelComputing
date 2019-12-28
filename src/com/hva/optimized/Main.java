@@ -1,25 +1,29 @@
 package com.hva.optimized;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 5000;
-    private static final int CORE = 1;
+    private static final int SIZE = 80000;
+    private static final int CORE = 4;
     private static AtomicIntegerArray array;
     private static int[] ints = new int[SIZE];
     private static Integer[] integers = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
     private static AtomicIntegerArray[] chunks = new AtomicIntegerArray[CORE];
     private static Semaphore[] sem = new Semaphore[CORE];
+    private static CyclicBarrier barrier = new CyclicBarrier(CORE,
+            new Runnable() {
+                public void run() {
+                    mergeChunks();
+                }
+            });
+    private static List<Integer> sortedArray = new ArrayList<Integer>();
+
 
     static class Worker implements Runnable {
-
         public Worker() {
 
         }
@@ -30,7 +34,7 @@ public class Main {
                     bubble(chunks[0]);
                 }
             } else {
-                for (int k = 0; k < SIZE / CORE; k++) {
+                for (int  k = 0; k < SIZE / CORE; k++) {
                     for (int i = 0; i < chunks.length; i++) {
                         try {
                             sem[i].acquire();
@@ -39,35 +43,56 @@ public class Main {
                         }
                         bubble(chunks[i]);
                         if (i < chunks.length - 1) {
-                            try {
-                                sem[i + 1].acquire();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            if(sem[i+1].availablePermits() == 0) {
+                                try {
+                                    sem[i + 1].acquire();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
-                            int last = chunks[i].get(chunks[i].length() - 1);
-                            int first = chunks[i + 1].get(0);
+                                int last = chunks[i].get(chunks[i].length() - 1);
+                                int first = chunks[i + 1].get(0);
 
-                            if (last > first) {
-                                chunks[i].set(chunks[i].length() - 1, first);
-                                chunks[i + 1].set(0, last);
-                            }
+                                if (last > first) {
+                                    chunks[i].set(chunks[i].length() - 1, first);
+                                    chunks[i + 1].set(0, last);
+                                }
 
-                            try {
-                                sem[i + 1].release();
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                                try {
+                                    sem[i + 1].release();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                int last = chunks[i].get(chunks[i].length() - 1);
+                                int first = chunks[i + 1].get(0);
+
+                                if (last > first) {
+                                    chunks[i].set(chunks[i].length() - 1, first);
+                                    chunks[i + 1].set(0, last);
+                                }
                             }
                         }
+
                         try {
                             sem[i].release();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+
                     }
                 }
+
+            }
+            try {
+                barrier.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (BrokenBarrierException e) {
+                e.printStackTrace();
             }
         }
+
     }
 
     private static void bubble(AtomicIntegerArray arr) {
@@ -102,7 +127,6 @@ public class Main {
         for (int t = 0; t < CORE; t++) {
             executor.submit(new Worker());
         }
-
         executor.shutdown();
 
         try {
@@ -115,24 +139,15 @@ public class Main {
         long elapsedTime = stopTime - startTime;
         System.out.println(" elapsed time: " + elapsedTime + " milliseconds");
 
-
-        List<Integer> sortedArray = new ArrayList<Integer>();
-
-        for (AtomicIntegerArray chunk : chunks) {
-            for (int i = 0; i < chunk.length(); i++) {
-//                System.out.println("chunk get " + chunk.get(i));
-                sortedArray.add(chunk.get(i));
-            }
-        }
-
         testArray = integers;
         Arrays.sort(testArray);
-        System.out.println("MERGED");
-        System.out.println("----------------------------");
 
-        System.out.println("test array " + Arrays.toString(testArray));
+//        System.out.println("MERGED");
+//        System.out.println("----------------------------");
 
-        System.out.println("sorted array" + Arrays.toString(sortedArray.toArray()));
+//        System.out.println("test array " + Arrays.toString(testArray));
+
+//        System.out.println("sorted array" + Arrays.toString(sortedArray.toArray()));
 
         assert Arrays.equals(testArray, sortedArray.toArray());
     }
@@ -149,6 +164,16 @@ public class Main {
         }
 
         array = new AtomicIntegerArray(ints);
+    }
+
+    public static void mergeChunks() {
+        for (AtomicIntegerArray chunk : chunks) {
+            for (int i = 0; i < chunk.length(); i++) {
+//                System.out.println("chunk get " + chunk.get(i));
+                sortedArray.add(chunk.get(i));
+            }
+        }
+
     }
 
     private static AtomicIntegerArray createAtomicArrayChunk(int start, int end, int chunkSize) {
