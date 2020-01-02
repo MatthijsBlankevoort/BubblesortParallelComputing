@@ -2,17 +2,14 @@ package com.hva.optimized;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 80000;
-    private static final int CORE = 4;
-    private static AtomicIntegerArray array;
-    private static int[] ints = new int[SIZE];
-    private static Integer[] integers = new Integer[SIZE];
+    private static final int SIZE = 5000;
+    private static final int CORE = 2;
+    private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
-    private static AtomicIntegerArray[] chunks = new AtomicIntegerArray[CORE];
+    private static Integer[][] chunks = new Integer[CORE][];
     private static Semaphore[] sem = new Semaphore[CORE];
     private static CyclicBarrier barrier = new CyclicBarrier(CORE,
             new Runnable() {
@@ -50,12 +47,12 @@ public class Main {
                                     e.printStackTrace();
                                 }
 
-                                int last = chunks[i].get(chunks[i].length() - 1);
-                                int first = chunks[i + 1].get(0);
+                                int last = chunks[i][chunks[i].length - 1];
+                                int first = chunks[i + 1][0];
 
                                 if (last > first) {
-                                    chunks[i].set(chunks[i].length() - 1, first);
-                                    chunks[i + 1].set(0, last);
+                                    chunks[i][chunks[i].length - 1] = first;
+                                    chunks[i + 1][0] = last;
                                 }
 
                                 try {
@@ -63,13 +60,14 @@ public class Main {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                            } else {
-                                int last = chunks[i].get(chunks[i].length() - 1);
-                                int first = chunks[i + 1].get(0);
+                            }
+                            else {
+                                int last = chunks[i][chunks[i].length - 1];
+                                int first = chunks[i + 1][0];
 
                                 if (last > first) {
-                                    chunks[i].set(chunks[i].length() - 1, first);
-                                    chunks[i + 1].set(0, last);
+                                    chunks[i][chunks[i].length - 1] = first;
+                                    chunks[i + 1][0] = last;
                                 }
                             }
                         }
@@ -79,7 +77,6 @@ public class Main {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-
                     }
                 }
 
@@ -95,14 +92,14 @@ public class Main {
 
     }
 
-    private static void bubble(AtomicIntegerArray arr) {
-        int n = arr.length();
+    private static void bubble(Integer[] arr) {
+        int n = arr.length;
 
         for (int j = 0; j < n - 1; j++) {
-            if (arr.get(j) > arr.get(j + 1)) {
-                int temp = arr.get(j);
-                arr.set(j, arr.get(j + 1));
-                arr.set(j + 1, temp);
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
             }
         }
     }
@@ -139,15 +136,15 @@ public class Main {
         long elapsedTime = stopTime - startTime;
         System.out.println(" elapsed time: " + elapsedTime + " milliseconds");
 
-        testArray = integers;
+        testArray = array;
         Arrays.sort(testArray);
+
+//        for (Integer[] chunk : chunks) {
+//            sortedArray.addAll(Arrays.asList(chunk));
+//        }
 
 //        System.out.println("MERGED");
 //        System.out.println("----------------------------");
-
-//        System.out.println("test array " + Arrays.toString(testArray));
-
-//        System.out.println("sorted array" + Arrays.toString(sortedArray.toArray()));
 
         assert Arrays.equals(testArray, sortedArray.toArray());
     }
@@ -155,49 +152,44 @@ public class Main {
     private static void initializeArray() {
         Random rand = new Random(SEED);
         for (int i = 0; i < SIZE; i++) {
-            integers[i] = rand.nextInt(SIZE);
-        }
-        Arrays.sort(integers, Collections.reverseOrder());
-
-        for (int i = 0; i < SIZE; i++) {
-            ints[i] = integers[i];
+            array[i] = rand.nextInt(SIZE);
         }
 
-        array = new AtomicIntegerArray(ints);
+        Arrays.sort(array, Collections.reverseOrder());
     }
 
-    public static void mergeChunks() {
-        for (AtomicIntegerArray chunk : chunks) {
-            for (int i = 0; i < chunk.length(); i++) {
-//                System.out.println("chunk get " + chunk.get(i));
-                sortedArray.add(chunk.get(i));
-            }
+    private static void mergeChunks() {
+        for (Integer[] chunk : chunks) {
+            //                System.out.println("chunk get " + chunk.get(i));
+            sortedArray.addAll(Arrays.asList(chunk));
         }
 
     }
 
-    private static AtomicIntegerArray createAtomicArrayChunk(int start, int end, int chunkSize) {
-        AtomicIntegerArray atomicIntegerArrayChunk = new AtomicIntegerArray(chunkSize);
-        for (int i = start, j = 0; i < end; i++, j++) {
-            atomicIntegerArrayChunk.set(j, array.get(i));
-        }
-        return atomicIntegerArrayChunk;
-    }
-
-    private static AtomicIntegerArray[] splitArray(AtomicIntegerArray arrayToSplit, int chunkSize) {
+    private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize) {
         if (chunkSize <= 0) {
-            return null;
+            return null;  // just in case :)
         }
-        int rest = arrayToSplit.length() % chunkSize;
-        int chunks = arrayToSplit.length() / chunkSize + (rest > 0 ? 1 : 0);
-        AtomicIntegerArray[] arrays = new AtomicIntegerArray[chunks];
+        // first we have to check if the array can be split in multiple
+        // arrays of equal 'chunk' size
+        int rest = arrayToSplit.length % chunkSize;  // if rest>0 then our last array will have less elements than the others
+        // then we check in how many arrays we can split our input array
+        int chunks = arrayToSplit.length / chunkSize + (rest > 0 ? 1 : 0); // we may have to add an additional array for the 'rest'
+        // now we know how many arrays we need and create our result array
+        Integer[][] arrays = new Integer[chunks][];
+        // we create our resulting arrays by copying the corresponding
+        // part from the input array. If we have a rest (rest>0), then
+        // the last array will have less elements than the others. This
+        // needs to be handled separately, so we iterate 1 times less.
         for (int i = 0; i < (rest > 0 ? chunks - 1 : chunks); i++) {
-            arrays[i] = createAtomicArrayChunk(i * chunkSize, i * chunkSize + chunkSize, chunkSize);
+            // this copies 'chunk' times 'chunkSize' elements into a new array
+            arrays[i] = Arrays.copyOfRange(arrayToSplit, i * chunkSize, i * chunkSize + chunkSize);
         }
-        if (rest > 0) {
-            arrays[chunks - 1] = createAtomicArrayChunk((chunks - 1) * chunkSize, (chunks - 1) * chunkSize + rest, chunkSize);
+        if (rest > 0) { // only when we have a rest
+            // we copy the remaining elements into the last chunk
+            arrays[chunks - 1] = Arrays.copyOfRange(arrayToSplit, (chunks - 1) * chunkSize, (chunks - 1) * chunkSize + rest);
         }
 
-        return arrays;
+        return arrays; // that's it
     }
 }
