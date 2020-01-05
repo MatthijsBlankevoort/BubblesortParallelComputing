@@ -31,14 +31,17 @@ public class Main {
                     bubble(chunks[0]);
                 }
             } else {
-                for (int  k = 0; k < SIZE / CORE; k++) {
+                for (int k = 0; k < SIZE / CORE; k++) {
                     for (int i = 0; i < chunks.length; i++) {
+
                         try {
                             sem[i].acquire();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+
                         bubble(chunks[i]);
+
                         if (i < chunks.length - 1) {
                             if(sem[i+1].availablePermits() == 0) {
                                 try {
@@ -47,8 +50,8 @@ public class Main {
                                     e.printStackTrace();
                                 }
 
-                                int last = chunks[i][chunks[i].length - 1];
-                                int first = chunks[i + 1][0];
+                                Integer last = chunks[i][chunks[i].length - 1];
+                                Integer first = chunks[i + 1][0];
 
                                 if (last > first) {
                                     chunks[i][chunks[i].length - 1] = first;
@@ -60,16 +63,16 @@ public class Main {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                            }
-                            else {
-                                int last = chunks[i][chunks[i].length - 1];
-                                int first = chunks[i + 1][0];
+                            } else {
+                                Integer last = chunks[i][chunks[i].length - 1];
+                                Integer first = chunks[i + 1][0];
 
                                 if (last > first) {
                                     chunks[i][chunks[i].length - 1] = first;
                                     chunks[i + 1][0] = last;
                                 }
                             }
+
                         }
 
                         try {
@@ -77,9 +80,9 @@ public class Main {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+
                     }
                 }
-
             }
             try {
                 barrier.await();
