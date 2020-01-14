@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class Main {
     private static final int SEED = 10;
-    private static final int SIZE = 5000;
+    private static final int SIZE = 20000;
     private static final int CORE = 1;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
@@ -105,11 +105,8 @@ public class Main {
         List<Integer> sortedArray = new ArrayList<Integer>();
 
         for (int i = 0; i < chunks.length; i++) {
-            for (int j = 0; j < chunks[i].length; j++) {
-                sortedArray.add(chunks[i][j]);
-            }
+            sortedArray.addAll(Arrays.asList(chunks[i]));
         }
-
 
         testArray = array;
         Arrays.sort(testArray);
