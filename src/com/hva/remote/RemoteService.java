@@ -11,8 +11,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static final int PORT = 1199;
     private static final long serialVersionUID = 1L;
     private static final int SEED = 10;
-    public static final int SIZE = 5000;
-    public static final int THREADS = 4;
+    public static final int SIZE = 9;
+    public static final int THREADS = 3;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
     private static Integer[][] chunks = new Integer[THREADS][];
@@ -29,11 +29,13 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
         long startTime = System.currentTimeMillis();
 
+        chunks = splitArray(array, SIZE / THREADS);
+
         Registry registry = LocateRegistry.createRegistry(PORT);
-        registry.rebind("//localhost/BubbleSorter", new RemoteService());
+        registry.rebind("//169.254.1.1/BubbleSorter", new RemoteService());
 
         //TODO: check if sorted?
-        while (sortedCounter != THREADS) {
+        while (sortedCounter != 1) {
         }
 
         for(int i = 0; i < SIZE; i++) {
@@ -58,7 +60,9 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     }
 
     public void swapEdges(Integer last, int chunkNumber) throws RemoteException {
+        System.out.println("Swapping edges");
         try {
+            System.out.println("try acquire swap sem");
             sem[chunkNumber + 1].acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -71,12 +75,13 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
             chunks[chunkNumber + 1][0] = last;
         }
 
+        sem[chunkNumber].release();
         sem[chunkNumber + 1].release();
 
     }
 
     public Integer[] getChunk(Integer chunkNumber) throws RemoteException {
-
+        System.out.println("getting chunk");
         try {
             sem[chunkNumber].acquire();
         } catch (InterruptedException e) {
@@ -88,7 +93,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
 
 
-    public void bubble(Integer[] arr, int semaphoreNumber) throws RemoteException {
+    public void bubble(Integer[] arr) throws RemoteException {
+        System.out.println("bubble");
         int n = arr.length;
 
         for (int j = 0; j < n - 1; j++) {
@@ -98,13 +104,6 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
                 arr[j + 1] = temp;
             }
         }
-
-        try {
-            sem[semaphoreNumber].acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
     }
 
     private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize) {

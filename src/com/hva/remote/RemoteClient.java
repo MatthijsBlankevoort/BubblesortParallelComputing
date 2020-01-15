@@ -1,32 +1,35 @@
 package com.hva.remote;
-import jdk.swing.interop.SwingInterOpUtils;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 
 public class RemoteClient {
     private static final int PORT = 1199;
-    private static int SIZE = 5000;
-    private static int THREADS = 4;
+    private static int SIZE = 9;
+    private static int THREADS = 3;
 
     public static void main(String[] args) throws RemoteException, NotBoundException {
-        Registry registry = LocateRegistry.getRegistry("localhost", PORT);
-        RemoteInterface service = (RemoteInterface) registry.lookup("//localhost/BubbleSorter");
+        System.out.println("doing something");
+        Registry registry = LocateRegistry.getRegistry("169.254.1.1", PORT);
+        RemoteInterface service = (RemoteInterface) registry.lookup("//169.254.1.1/BubbleSorter");
 
         for (int k = 0; k < SIZE / THREADS; k++) {
             for (int i = 0; i < THREADS; i++) {
                 //TODO: get chunk
-                Integer[] chunk = service.getChunk(k);
+                Integer[] chunk = service.getChunk(i);
 
                 //TODO: sort chunk
-                service.bubble(chunk, k);
+                service.bubble(chunk);
 
                 Integer last = chunk[chunk.length - 1];
 
-                //TODO: swap edges
-                service.swapEdges(last, k);
+                if(i < THREADS - 1) {
+                    //TODO: swap edges
+                    service.swapEdges(last, i);
+                }
             }
         }
         System.out.println("SORTED");
