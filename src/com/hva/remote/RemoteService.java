@@ -39,11 +39,6 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         while (sortedCounter != 1) {
         }
 
-        for(int i = 0; i < SIZE; i++) {
-            System.out.println(chunks[i]);
-        }
-
-
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.println(" elapsed time: " + elapsedTime + " milliseconds");

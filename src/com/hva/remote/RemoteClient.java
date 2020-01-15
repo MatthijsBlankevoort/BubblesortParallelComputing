@@ -27,7 +27,7 @@ public class RemoteClient {
                 service.setChunk(chunk, i);
                 Integer last = chunk[chunk.length - 1];
 
-                if(i < THREADS) {
+                if(i < THREADS - 1) {
                     service.acquireSem(i+1);
 
                     //TODO: swap edges
