@@ -11,12 +11,13 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static final int PORT = 1199;
     private static final long serialVersionUID = 1L;
     private static final int SEED = 10;
-    public static final int SIZE = 20000;
-    public static final int CORE = 1;
+    public static final int SIZE = 5000;
+    public static final int THREADS = 4;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
-    private static Integer[][] chunks = new Integer[CORE][];
-    private static Semaphore[] sem = new Semaphore[CORE];
+    private static Integer[][] chunks = new Integer[THREADS][];
+    private static Semaphore[] sem = new Semaphore[THREADS];
+    private static int sortedCounter = 0;
 
     private RemoteService() throws RemoteException {
         super();
@@ -27,12 +28,18 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         initializeSemaphores();
 
         long startTime = System.currentTimeMillis();
-        chunks = splitArray(array, SIZE / CORE);
 
         Registry registry = LocateRegistry.createRegistry(PORT);
         registry.rebind("//localhost/BubbleSorter", new RemoteService());
 
         //TODO: check if sorted?
+        while (sortedCounter != THREADS) {
+        }
+
+        for(int i = 0; i < SIZE; i++) {
+            System.out.println(chunks[i]);
+        }
+
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -140,5 +147,9 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         for (int i = 0; i < sem.length; i++) {
             sem[i] = new Semaphore(1);
         }
+    }
+
+    public void increaseSortedCounter() throws RemoteException {
+        sortedCounter++;
     }
 }

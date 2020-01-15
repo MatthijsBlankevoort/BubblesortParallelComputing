@@ -1,4 +1,6 @@
 package com.hva.remote;
+import jdk.swing.interop.SwingInterOpUtils;
+
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -27,7 +29,7 @@ public class RemoteClient {
                 service.swapEdges(last, k);
             }
         }
-
-
+        System.out.println("SORTED");
+        service.increaseSortedCounter();
     }
 }
