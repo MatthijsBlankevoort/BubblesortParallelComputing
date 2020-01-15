@@ -11,8 +11,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static final int PORT = 1199;
     private static final long serialVersionUID = 1L;
     private static final int SEED = 10;
-    private static final int SIZE = 20000;
-    private static final int CORE = 1;
+    public static final int SIZE = 20000;
+    public static final int CORE = 1;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
     private static Integer[][] chunks = new Integer[CORE][];
@@ -50,18 +50,38 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         assert Arrays.equals(testArray, sortedArray.toArray());
     }
 
-    public void swapEdges(Integer last, Integer first, Integer chunkNumber) throws RemoteException {
+    public void swapEdges(Integer last, int chunkNumber) throws RemoteException {
+        try {
+            sem[chunkNumber + 1].acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Integer first = chunks[chunkNumber + 1][0];
+
         if (last > first) {
             chunks[chunkNumber][chunks[chunkNumber].length - 1] = first;
             chunks[chunkNumber + 1][0] = last;
         }
+
+        sem[chunkNumber + 1].release();
+
     }
 
     public Integer[] getChunk(Integer chunkNumber) throws RemoteException {
+
+        try {
+            sem[chunkNumber].acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         return chunks[chunkNumber];
     }
 
-    public void bubble(Integer[] arr) throws RemoteException {
+
+
+    public void bubble(Integer[] arr, int semaphoreNumber) throws RemoteException {
         int n = arr.length;
 
         for (int j = 0; j < n - 1; j++) {
@@ -71,6 +91,13 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
                 arr[j + 1] = temp;
             }
         }
+
+        try {
+            sem[semaphoreNumber].acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize) {
