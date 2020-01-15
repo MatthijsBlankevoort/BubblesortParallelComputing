@@ -1,5 +1,6 @@
 package com.hva.remote;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -61,12 +62,7 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
     public void swapEdges(Integer last, int chunkNumber) throws RemoteException {
         System.out.println("Swapping edges");
-        try {
-            System.out.println("try acquire swap sem");
-            sem[chunkNumber + 1].acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
 
         Integer first = chunks[chunkNumber + 1][0];
 
@@ -75,19 +71,9 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
             chunks[chunkNumber + 1][0] = last;
         }
 
-        sem[chunkNumber].release();
-        sem[chunkNumber + 1].release();
-
     }
 
     public Integer[] getChunk(Integer chunkNumber) throws RemoteException {
-        System.out.println("getting chunk");
-        try {
-            sem[chunkNumber].acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         return chunks[chunkNumber];
     }
 
@@ -104,6 +90,19 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
                 arr[j + 1] = temp;
             }
         }
+    }
+
+    public void acquireSem(int i) throws RemoteException {
+        try {
+            System.out.println("try acquire swap sem");
+            sem[i].acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void releaseSem(int i) throws RemoteException {
+        sem[i].release();
     }
 
     private static Integer[][] splitArray(Integer[] arrayToSplit, int chunkSize) {
@@ -147,6 +146,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
             sem[i] = new Semaphore(1);
         }
     }
+
+
 
     public void increaseSortedCounter() throws RemoteException {
         sortedCounter++;

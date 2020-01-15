@@ -19,6 +19,7 @@ public class RemoteClient {
         for (int k = 0; k < SIZE / THREADS; k++) {
             for (int i = 0; i < THREADS; i++) {
                 //TODO: get chunk
+                service.acquireSem(i);
                 Integer[] chunk = service.getChunk(i);
 
                 //TODO: sort chunk
@@ -26,10 +27,15 @@ public class RemoteClient {
 
                 Integer last = chunk[chunk.length - 1];
 
-                if(i < THREADS - 1) {
+                if(i < THREADS) {
+                    service.acquireSem(i+1);
+
                     //TODO: swap edges
                     service.swapEdges(last, i);
+                    service.releaseSem(i+1);
                 }
+
+                service.releaseSem(i);
             }
         }
         System.out.println("SORTED");
