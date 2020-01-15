@@ -29,15 +29,15 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         initializeArray();
         initializeSemaphores();
 
-        while (clientsStartedCounter != THREADS) {
-        }
-
-        long startTime = System.currentTimeMillis();
-
         chunks = splitArray(array, SIZE / THREADS);
 
         Registry registry = LocateRegistry.createRegistry(PORT);
         registry.rebind("//169.254.1.1/BubbleSorter", new RemoteService());
+
+        while (clientsStartedCounter != THREADS) {
+        }
+
+        long startTime = System.currentTimeMillis();
 
         //TODO: check if sorted?
         while (sortedCounter != 1) {
