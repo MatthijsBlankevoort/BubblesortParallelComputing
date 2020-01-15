@@ -147,9 +147,12 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     }
 
 
-
     public void increaseSortedCounter() throws RemoteException {
         sortedCounter++;
+    }
+
+    public boolean canStartSorting() throws RemoteException {
+        return sortedCounter == THREADS;
     }
 
     public void increaseClientsStarted() throws RemoteException {
