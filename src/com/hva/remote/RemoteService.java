@@ -19,6 +19,7 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static Integer[][] chunks = new Integer[THREADS][];
     private static Semaphore[] sem = new Semaphore[THREADS];
     private static int sortedCounter = 0;
+    private static int clientsStartedCounter = 0;
 
     private RemoteService() throws RemoteException {
         super();
@@ -27,6 +28,9 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     public static void main(String[] args) throws RemoteException {
         initializeArray();
         initializeSemaphores();
+
+        while (clientsStartedCounter != THREADS) {
+        }
 
         long startTime = System.currentTimeMillis();
 
@@ -145,6 +149,10 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
 
     public void increaseSortedCounter() throws RemoteException {
+        sortedCounter++;
+    }
+
+    public void increaseClientsStarted() throws RemoteException {
         sortedCounter++;
     }
 

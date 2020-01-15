@@ -15,6 +15,7 @@ public class RemoteClient {
         System.out.println("doing something");
         Registry registry = LocateRegistry.getRegistry("169.254.1.1", PORT);
         RemoteInterface service = (RemoteInterface) registry.lookup("//169.254.1.1/BubbleSorter");
+        service.increateClientsStarted();
 
         for (int k = 0; k < SIZE / THREADS; k++) {
             for (int i = 0; i < THREADS; i++) {

@@ -7,6 +7,7 @@ public interface RemoteInterface extends Remote {
     Integer[] getChunk(Integer chunkNumber) throws RemoteException;
     void bubble(Integer[] arr) throws RemoteException;
     void increaseSortedCounter() throws RemoteException;
+    void increaseClientsStarted() throws RemoteException;
     void releaseSem(int i) throws RemoteException;
     void acquireSem(int i) throws RemoteException;
     void setChunk(Integer[] chunk, int i) throws RemoteException;
