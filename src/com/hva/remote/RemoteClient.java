@@ -24,7 +24,7 @@ public class RemoteClient {
 
                 //TODO: sort chunk
                 service.bubble(chunk);
-
+                service.setChunk(chunk, i);
                 Integer last = chunk[chunk.length - 1];
 
                 if(i < THREADS) {

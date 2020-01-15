@@ -9,4 +9,5 @@ public interface RemoteInterface extends Remote {
     void increaseSortedCounter() throws RemoteException;
     void releaseSem(int i) throws RemoteException;
     void acquireSem(int i) throws RemoteException;
+    void setChunk(Integer[] chunk, int i) throws RemoteException;
 }

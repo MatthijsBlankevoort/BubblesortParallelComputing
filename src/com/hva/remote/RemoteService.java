@@ -152,4 +152,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     public void increaseSortedCounter() throws RemoteException {
         sortedCounter++;
     }
+
+    public void setChunk(Integer[] chunk, int i) throws RemoteException {
+        chunks[i] = chunk;
+    }
 }
