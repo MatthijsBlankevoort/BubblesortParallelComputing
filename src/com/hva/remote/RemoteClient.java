@@ -12,38 +12,38 @@ public class RemoteClient {
     private static int THREADS = 3;
 
     public static void main(String[] args) throws RemoteException, NotBoundException {
-        System.out.println("doing something");
         Registry registry = LocateRegistry.getRegistry("169.254.1.1", PORT);
         RemoteInterface service = (RemoteInterface) registry.lookup("//169.254.1.1/BubbleSorter");
         service.increaseClientsStarted();
+        Integer[][] chunks = service.getChunks();
+        for (Integer[] chunk : chunks) System.out.println("client chunks " + Arrays.toString(chunk));
 
-        while(!service.canStartSorting()) {
-            System.out.println("PIK IK WACHT OPJE");
-        }
+        while (!service.canStartSorting())
 
-            for (int k = 0; k < SIZE / THREADS; k++) {
-            for (int i = 0; i < THREADS; i++) {
-                //TODO: get chunk
+        for (int k = 0; k < SIZE / THREADS; k++) {
+            for (int i = 0; i < chunks.length; i++) {
                 service.acquireSem(i);
-                Integer[] chunk = service.getChunk(i);
 
-                //TODO: sort chunk
-                service.bubble(chunk);
-                service.setChunk(chunk, i);
-                Integer last = chunk[chunk.length - 1];
+                chunks[i] = service.bubble(chunks[i]);
 
-                if(i < THREADS - 1) {
-                    service.acquireSem(i+1);
+                if (i < THREADS - 1) {
+                    service.acquireSem(i + 1);
 
                     //TODO: swap edges
-                    service.swapEdges(last, i);
-                    service.releaseSem(i+1);
-                }
+                    Integer last = chunks[i][chunks[i].length - 1];
+                    Integer first = chunks[i + 1][0];
 
+                    if (last > first) {
+                        chunks[i][chunks[i].length - 1] = first;
+                        chunks[i + 1][0] = last;
+                    }
+                    service.releaseSem(i + 1);
+                }
+                service.setChunk(chunks[i], i);
                 service.releaseSem(i);
             }
         }
+        for (Integer[] chunk : chunks) System.out.println(Arrays.toString(chunk));
         System.out.println("SORTED");
-        service.increaseSortedCounter();
     }
 }

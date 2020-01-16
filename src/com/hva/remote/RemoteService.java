@@ -1,5 +1,6 @@
 package com.hva.remote;
 
+import java.lang.reflect.Array;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -34,14 +35,19 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         Registry registry = LocateRegistry.createRegistry(PORT);
         registry.rebind("//169.254.1.1/BubbleSorter", new RemoteService());
 
-        while (clientsStartedCounter != THREADS) {
-        }
+        System.out.println("Waiting for all clients...");
+
+        while (clientsStartedCounter != THREADS);
+
+        System.out.println("clients started");
 
         long startTime = System.currentTimeMillis();
 
-        //TODO: check if sorted?
-        while (sortedCounter != 1) {
-        }
+        System.out.println("waiting for sorting...");
+
+        while (sortedCounter != THREADS);
+
+        System.out.println("All sorted");
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -49,8 +55,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
         List<Integer> sortedArray = new ArrayList<Integer>();
 
-        for (int i = 0; i < chunks.length; i++) {
-            sortedArray.addAll(Arrays.asList(chunks[i]));
+        for (Integer[] chunk : chunks) {
+            sortedArray.addAll(Arrays.asList(chunk));
         }
 
         testArray = array;
@@ -60,9 +66,6 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     }
 
     public void swapEdges(Integer last, int chunkNumber) throws RemoteException {
-        System.out.println("Swapping edges");
-
-
         Integer first = chunks[chunkNumber + 1][0];
 
         if (last > first) {
@@ -72,14 +75,11 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
     }
 
-    public Integer[] getChunk(Integer chunkNumber) throws RemoteException {
-        return chunks[chunkNumber];
+    public Integer[][] getChunks() throws RemoteException {
+        return chunks;
     }
 
-
-
-    public void bubble(Integer[] arr) throws RemoteException {
-        System.out.println("bubble");
+    public Integer[] bubble(Integer[] arr) throws RemoteException {
         int n = arr.length;
 
         for (int j = 0; j < n - 1; j++) {
@@ -89,11 +89,11 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
                 arr[j + 1] = temp;
             }
         }
+        return arr;
     }
 
     public void acquireSem(int i) throws RemoteException {
         try {
-            System.out.println("try acquire swap sem");
             sem[i].acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -148,18 +148,23 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
 
 
     public void increaseSortedCounter() throws RemoteException {
-        sortedCounter++;
+        synchronized (this) {
+            sortedCounter++;
+        }
     }
 
     public boolean canStartSorting() throws RemoteException {
-        return sortedCounter == THREADS;
+        return clientsStartedCounter == THREADS;
     }
 
     public void increaseClientsStarted() throws RemoteException {
-        sortedCounter++;
+        synchronized (this) {
+            clientsStartedCounter++;
+        }
     }
 
     public void setChunk(Integer[] chunk, int i) throws RemoteException {
+//        System.out.println("SETTING CHUNK" + i + " TO ARRAY" + Arrays.toString(chunk));
         chunks[i] = chunk;
     }
 }
