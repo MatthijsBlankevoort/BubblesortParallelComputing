@@ -19,8 +19,8 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static Integer[] testArray = new Integer[SIZE];
     private static Integer[][] chunks = new Integer[THREADS][];
     private static Semaphore[] sem = new Semaphore[THREADS];
-    private static int sortedCounter = 0;
-    private static int clientsStartedCounter = 0;
+    private volatile static int sortedCounter = 0;
+    private volatile static int clientsStartedCounter = 0;
 
     private RemoteService() throws RemoteException {
         super();
@@ -59,9 +59,13 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
             sortedArray.addAll(Arrays.asList(chunk));
         }
 
+
         testArray = array;
         Arrays.sort(testArray);
-
+        System.out.println("SORTED ARRAY:");
+        for(int i = 0; i < sortedArray.size(); i++) {
+            System.out.print(sortedArray.get(i) + " - ");
+        }
         assert Arrays.equals(testArray, sortedArray.toArray());
     }
 
@@ -158,6 +162,7 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     }
 
     public void increaseClientsStarted() throws RemoteException {
+        System.out.println("CLIENT STARTED");
         synchronized (this) {
             clientsStartedCounter++;
         }

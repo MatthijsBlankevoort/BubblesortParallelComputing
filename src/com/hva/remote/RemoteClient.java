@@ -44,6 +44,7 @@ public class RemoteClient {
             }
         }
         for (Integer[] chunk : chunks) System.out.println(Arrays.toString(chunk));
+        service.increaseSortedCounter();
         System.out.println("SORTED");
     }
 }
