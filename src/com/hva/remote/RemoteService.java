@@ -13,7 +13,7 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
     private static final int PORT = 1199;
     private static final long serialVersionUID = 1L;
     private static final int SEED = 10;
-    public static final int SIZE = 9;
+    public static final int SIZE = 3000;
     public static final int THREADS = 3;
     private static Integer[] array = new Integer[SIZE];
     private static Integer[] testArray = new Integer[SIZE];
@@ -33,7 +33,7 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         chunks = splitArray(array, SIZE / THREADS);
 
         Registry registry = LocateRegistry.createRegistry(PORT);
-        registry.rebind("//169.254.1.1/BubbleSorter", new RemoteService());
+        registry.rebind("//localhost/BubbleSorter", new RemoteService());
 
         System.out.println("Waiting for all clients...");
 

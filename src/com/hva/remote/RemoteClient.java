@@ -8,19 +8,19 @@ import java.util.Arrays;
 
 public class RemoteClient {
     private static final int PORT = 1199;
-    private static int SIZE = 9;
+    private static int SIZE = 3000;
     private static int THREADS = 3;
 
     public static void main(String[] args) throws RemoteException, NotBoundException {
-        Registry registry = LocateRegistry.getRegistry("169.254.1.1", PORT);
-        RemoteInterface service = (RemoteInterface) registry.lookup("//169.254.1.1/BubbleSorter");
+        Registry registry = LocateRegistry.getRegistry("localhost", PORT);
+        RemoteInterface service = (RemoteInterface) registry.lookup("//localhost/BubbleSorter");
         service.increaseClientsStarted();
         Integer[][] chunks = service.getChunks();
         for (Integer[] chunk : chunks) System.out.println("client chunks " + Arrays.toString(chunk));
 
-        while (!service.canStartSorting())
+        while (!service.canStartSorting());
 
-        for (int k = 0; k < SIZE / THREADS; k++) {
+        for (int k = 0; k < SIZE; k++) {
             for (int i = 0; i < chunks.length; i++) {
                 service.acquireSem(i);
 
@@ -37,6 +37,8 @@ public class RemoteClient {
                         chunks[i][chunks[i].length - 1] = first;
                         chunks[i + 1][0] = last;
                     }
+                    service.setChunk(chunks[i+1], i+1);
+
                     service.releaseSem(i + 1);
                 }
                 service.setChunk(chunks[i], i);
