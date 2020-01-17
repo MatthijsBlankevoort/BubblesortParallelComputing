@@ -161,6 +161,10 @@ public class RemoteService extends UnicastRemoteObject implements RemoteInterfac
         return clientsStartedCounter == THREADS;
     }
 
+    public Integer[] getChunk(int i) throws RemoteException {
+        return chunks[i];
+    }
+
     public void increaseClientsStarted() throws RemoteException {
         System.out.println("CLIENT STARTED");
         synchronized (this) {

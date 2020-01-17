@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 public interface RemoteInterface extends Remote {
     void swapEdges(Integer last, int chunkNumber) throws RemoteException;
     Integer[][] getChunks() throws RemoteException;
+    Integer[] getChunk(int i) throws RemoteException;
     Integer[] bubble(Integer[] arr) throws RemoteException;
     void increaseSortedCounter() throws RemoteException;
     void increaseClientsStarted() throws RemoteException;
